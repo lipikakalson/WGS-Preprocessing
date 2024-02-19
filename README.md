@@ -19,8 +19,8 @@ Our first aim was to see the quality of our data. We have raw cram files for our
 **Step 1: Conversion to fastq.**
 We did this as most of the common bioinformatics tool accept the .fastq extension files for analysis, so it is easy for further processing.
 
-**Step 2 Adaptor Trimming.**
-We have dual indexed molecular barcoded fastq files, so for that we used Trimmer by AGeNT (The Agilent Genomics Tooklkit). It removes adaptor sequences from Illumina Sequencing reads generated using Sureselect library preparation kits, it also processed the Molecular Barcodes(MBC) and adds teh information to read name of output fastq files.
+**Step 2: Adaptor Trimming.**
+We have dual indexed molecular barcoded fastq files, so for that we used Trimmer by AGeNT (The Agilent Genomics Tooklkit). It removes adaptor sequences from Illumina Sequencing reads generated using Sureselect library preparation kits, it also processed the Molecular Barcodes(MBC) and adds the information to read name of output fastq files.
 Fastq files now somehat looks like this.
 ```
 @A01664:161:HG7L2DRX3:2:1101:22688:19617	BC:Z:GAGCACTG+CACAATTC	ZA:Z:ATACT	ZB:Z:CAGT	RX:Z:ATA-CAG	QX:Z:FFF FFF
@@ -29,4 +29,9 @@ AAATCCAACCCTATGGAGCCACGGAGGATCTGCTAACAAGGTAGATGACTTAGTACCTATAACAGAAGCCATCAGCACAG
 FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF:FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
 ```
 
+**Step 3: Alignment**
+Alignment of the fastq files using the hs38DH.fa, also did the post processing using the bwa.kit for alt handling. Then sorting, and indexing. (Computationaly intensive).
+
+**Step 4: Duplicate removal**
+We have barcodes information to remove the duplicates, we used markduplicates by gatk for this purpose.
 
