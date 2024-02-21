@@ -42,7 +42,7 @@ This was done by GATK UmiAwareMarkDuplicatesWithMateCigar as we have molecular b
 
 # Miscellaneous question
 ## 1. hs38DH.fa
-### hs38DH.fa consists of several components: chromosomal assembly, unlocalized contigs (chromosome known but location unknown), unplaced contigs (chromosome unknown), ALT contigs (long clustered variations), HLA sequnences, decoys. Using ALT contigs in read mapping is tricky.
+hs38DH.fa consists of several components: chromosomal assembly, unlocalized contigs (chromosome known but location unknown), unplaced contigs (chromosome unknown), ALT contigs (long clustered variations), HLA sequnences, decoys. Using ALT contigs in read mapping is tricky.
 GRCh38 ALT contigs are totaled 109Mb in length, spanning 60Mbp of the primary assembly. However, sequences that are highly diverged from the primary assembly only contribute a few million bp. Most subsequences of ALT contigs are nearly identical to the primary assembly. If we align sequence reads to GRCh38+ALT blindly, we will get many additional reads with zero mapping quality and miss variants on them.
 
 For this, we used bwa - which is a alt-aware aligner. It does alignment in two steps: BWA-MEM mapping, post-processing (for alt handling). (More detail in regarding alt-aware mapping [bwa](https://github.com/lh3/bwa/blob/master/README-alt.md).
