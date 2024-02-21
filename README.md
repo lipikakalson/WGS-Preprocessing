@@ -16,10 +16,10 @@ After quantification on the Agilent TapeStation with the D1000 kit, the WGS sequ
 # 3. Bioinformatics
 Our first aim was to see the quality of our data. We have raw cram files for our analysis on which we performed following steps:
 
-**Step 1: Conversion to fastq.**
+## **Step 1: Conversion to fastq.** <br>
 We did this as most of the common bioinformatics tool accept the .fastq extension files for analysis, so it is easy for further processing.
 
-**Step 2: Adaptor Trimming.**
+## **Step 2: Adaptor Trimming.** <br>
 We have dual indexed molecular barcoded fastq files, so for that we used Trimmer by AGeNT (The Agilent Genomics Tooklkit). It removes adaptor sequences from Illumina Sequencing reads generated using Sureselect library preparation kits, it also processed the Molecular Barcodes(MBC) and adds the information to read name of output fastq files.
 Fastq files now somehat looks like this.
 ```
@@ -29,16 +29,16 @@ AAATCCAACCCTATGGAGCCACGGAGGATCTGCTAACAAGGTAGATGACTTAGTACCTATAACAGAAGCCATCAGCACAG
 FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF:FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
 ```
 
-**Step 3: Alignment**
+## **Step 3: Alignment** <br>
 Alignment of the fastq files using the hs38DH.fa, also did the post processing using the bwa.kit for alt handling. Then sorting, and indexing. (Computationaly intensive).
 
-**Step 4: RG information**
+## **Step 4: RG information** <br>
 Our aligned bam files did not have read group (@RG) information required to remove duplicates. We added this using samtools "addreplacerg" command.
 
-**Step 4: Duplicate removal**
+## **Step 4: Duplicate removal** <br>
 This was done by GATK UmiAwareMarkDuplicatesWithMateCigar as we have molecular barcoded genome libraries.
 
-**Step 5: qualimap**
+## **Step 5: qualimap** 
 
 # Miscellaneous question
 ## 1. hs38DH.fa
