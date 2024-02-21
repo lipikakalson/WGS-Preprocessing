@@ -33,7 +33,9 @@ Our aligned bam files did not have read group (@RG) information required to remo
 ### **Step 4: Duplicate removal** <br>
 This was done by GATK UmiAwareMarkDuplicatesWithMateCigar as we have molecular barcoded genome libraries.
 
-### **Step 5: qualimap** 
+### **Step 5: BQSR** 
+
+### **Step 6: Qualimap**
 
 # Miscellaneous question
 ## 1. hs38DH.fa
