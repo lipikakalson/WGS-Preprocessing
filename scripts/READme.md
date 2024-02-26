@@ -68,6 +68,7 @@ sambamba flagstat -t 36 $bam_file  > ${ouput_dir1}/${filename}.stats.txt
 echo "sambamba done"
 ```
 
+**7. MultiQC**
 
 
 
