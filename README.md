@@ -31,13 +31,13 @@ Our aligned bam files did not have read group (@RG) information required to remo
 
 (Step 3 and 4 can be merged for later)
 
-### **Step 4: Duplicate removal** <br>
+### **Step 5: Duplicate removal** <br>
 This was done by GATK [UmiAwareMarkDuplicatesWithMateCigar](https://gatk.broadinstitute.org/hc/en-us/articles/360037593651-UmiAwareMarkDuplicatesWithMateCigar-Picard-EXPERIMENTAL) as we have molecular barcoded genome libraries.
 
-### **Step 5: BQSR** 
+### **Step 6: BQSR** 
 Base Quality Score Recalibration ([BQSR](https://gatk.broadinstitute.org/hc/en-us/articles/360035890531-Base-Quality-Score-Recalibration-BQSR)):- A data pre-processing step that detects systematic errors made by the sequencing machine when it estimates the accuracy of each base call.
 
-### **Step 6: Qualimap**
+### **Step 7: Qualimap**
 [Qualimap](http://qualimap.conesalab.org/doc_html/index.html) Examines sequencing alignment data in SAM/BAM format.
 
 # Miscellaneous question
