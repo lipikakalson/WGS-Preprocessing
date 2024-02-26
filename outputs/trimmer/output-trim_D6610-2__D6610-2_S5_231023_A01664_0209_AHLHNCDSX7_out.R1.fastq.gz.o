@@ -1,7 +1,0 @@
-trim -fq1 /home/isilon/patho_anemone-meso/updated-data-bam/fastq/D6610-2__D6610-2_S5_231023_A01664_0209_AHLHNCDSX7_out.R1.fastq.gz -fq2 /home/isilon/patho_anemone-meso/updated-data-bam/fastq/D6610-2__D6610-2_S5_231023_A01664_0209_AHLHNCDSX7_out.R2.fastq.gz -v2 -out_loc /home/isilon/patho_anemone-meso/updated-data-bam/fastq/trimmed
-
-Warning: Number of R1/R2 reads before trimming: 827518438/827518438; Number of R1/R2 reads after trimming: 827391950/827391950
-Trimmed file created:
-	/home/isilon/patho_anemone-meso/updated-data-bam/fastq/trimmed/D6610-2__D6610-2_S5_231023_A01664_0209_AHLHNCDSX7_out.R1.1708286123343_Cut_0.fastq.gz
-	/home/isilon/patho_anemone-meso/updated-data-bam/fastq/trimmed/D6610-2__D6610-2_S5_231023_A01664_0209_AHLHNCDSX7_out.R2.1708286123343_Cut_0.fastq.gz
-	/home/isilon/patho_anemone-meso/updated-data-bam/fastq/trimmed/D6610-2__D6610-2_S5_231023_A01664_0209_AHLHNCDSX7_out.RN.1708286123343_MBC_0.txt.gz
