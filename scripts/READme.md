@@ -75,7 +75,7 @@ echo "sambamba done"
 **7. MultiQC** <br>
 qc-files folder has recal-tables from BQSR, flagstat results of *output_file_BQSRecalibrated.bam, and qualimap results.
 ```
-multiqc /home/isilon/patho_anemone-meso/updated-data-bam/fastq/trimmed/qc-files/ -n multiqc_qualimap.html --comment "WGS final QC report"
+multiqc /home/isilon/patho_anemone-meso/updated-data-bam/fastq/trimmed/qc-files/ -n multiqc_qualimap_flagstat_BQSR_report.html --comment "WGS final QC report"
 ```
 
 
