@@ -47,7 +47,7 @@ srun samtools addreplacerg -@24 -r ID:HKW72DSX7.1 -r SM:D6039-8 -r PL:ILLUMINA -
 
 **4. Markduplicates**
 ```
-java -jar "$PICARD_JAR" UmiAwareMarkDuplicatesWithMateCigar -I "${INPUT_DIR}/${filename}" -O "${filename1}_dedup.bam" -M "${filename1}_duplicate_metrics.txt" -UMI_METRICS "${filename1}_umi_metrics.txt" --BARCODE_TAG BC --TMP_DIR "$tmp" --REMOVE_DUPLICATES true
+java -jar "$PICARD_JAR" UmiAwareMarkDuplicatesWithMateCigar -I "${INPUT_DIR}/${filename}" -O "${filename1}_dedup.bam" -M "${filename1}_duplicate_metrics.txt" -UMI_METRICS "${filename1}_umi_metrics.txt" --BARCODE_TAG BC --TMP_DIR "$tmp" 
 
 rm -r "$tmp"
 ```
