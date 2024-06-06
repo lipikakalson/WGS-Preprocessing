@@ -20,19 +20,17 @@ To make our data analysis ready, our first aim was to see the quality of our dat
 ### **Step 1: Conversion to fastq.** <br>
 We did this as most of the common bioinformatics tool accept the .fastq extension files for analysis, so it is easy for further processing.
 
-### **Step 2: Adaptor Trimming.** <br>
+### **Step 2: Split lanewise each fastq file** <br>
+In later steps like using BQSR, exact readname information is needed, and also to keep the analysis to up to the mark, we performed this step so our file could have each unique RG headers.
+
+### **Step 3: Adaptor Trimming.** <br>
 We have dual indexed molecular barcoded fastq files, so for that we used Trimmer by [AGeNT](https://www.agilent.com/cs/library/software/Public/AGeNT%20ReadMe.pdf) (The Agilent Genomics Tooklkit). It removes adaptor sequences from Illumina Sequencing reads generated using Sureselect library preparation kits, it also processed the Molecular Barcodes(MBC) and adds the information to read name of output fastq files.
 
-### **Step 3: Alignment** <br>
+### **Step 4: Alignment** <br>
 Alignment of the fastq files using the hs38DH.fa, also did the post processing using the bwa.kit for alt handling. Then sorting, and indexing. (Computationaly intensive).
 
-### **Step 4: RG information** <br>
-Our aligned bam files did not have read group (@RG) information required to remove duplicates. We added this using samtools "addreplacerg" command.
-
-(Step 3 and 4 can be merged for later)
-
 ### **Step 5: Duplicate removal** <br>
-This was done by GATK [UmiAwareMarkDuplicatesWithMateCigar](https://gatk.broadinstitute.org/hc/en-us/articles/360037593651-UmiAwareMarkDuplicatesWithMateCigar-Picard-EXPERIMENTAL) as we have molecular barcoded genome libraries.
+This was done by GATK MarkDuplicates with BARCODE_TAG as RX, as we have molecular barcoded genome libraries.
 
 ### **Step 6: BQSR** 
 Base Quality Score Recalibration ([BQSR](https://gatk.broadinstitute.org/hc/en-us/articles/360035890531-Base-Quality-Score-Recalibration-BQSR)):- A data pre-processing step that detects systematic errors made by the sequencing machine when it estimates the accuracy of each base call.
