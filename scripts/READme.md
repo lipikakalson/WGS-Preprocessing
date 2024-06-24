@@ -3,53 +3,112 @@
 All the scripts for preprocessing and analysis.
 In this script, we tried to do the preprocessing of the raw sequencing data to get analysis ready BAM files. (I tried to replicate the alignment-nf in this workflow). Batch script are in the folder, below are the commands used in the scripts. 
 
-This might miss some necessary declaration of variable here like "filename", "input_dir", etc., bu they are there in batch scripts.
+This might miss some necessary declaration of variable here like "filename", "input_dir", etc., but they are there in batch scripts.
 
-**1. Adaptor Trimming**
+**1. Cram to fastq**
 ```
-java -jar /home/gpfs/o_lipika/PhD-analysis/agent/lib/trimmer-3.0.5.jar \
-    -fq1 /home/isilon/patho_anemone-meso/updated-data-bam/fastq/D6039-8__D6039-8_S2_230904_A01664_0191_BHKW72DSX7_out.R1.fastq.gz \
-    -fq2 /home/isilon/patho_anemone-meso/updated-data-bam/fastq/D6039-8__D6039-8_S2_230904_A01664_0191_BHKW72DSX7_out.R2.fastq.gz \
-    -v2 \ ## for Sureselect XT HS2 (library we used)
-    -out_loc /home/isilon/patho_anemone-meso/updated-data-bam/fastq/trimmed
+samtools fastq -@24 -t --reference "$reference" -1 "$output_folder/${sample_name}.R1.fastq" -2 "$output_folder/${sample_name}.R2.fastq" "$cram_file"
+```
+
+**2. Split-lanewise**
+```
+zcat $file1 | /home/gpfs/o_lipika/PhD-analysis/fastq-split/fastqSplit -k 3 -p -prefix ${sample_name1}. &
+zcat $r2_file | /home/gpfs/o_lipika/PhD-analysis/fastq-split/fastqSplit -k 3 -p -prefix ${sample_name2}. &
+```
+Using the (https://github.com/stevekm/fastq-split)[https://github.com/stevekm/fastq-split]
+Readname looks like this: **@A01664:191:HKW72DSX7:1:1101:1027:1016 1:N:0:TGCTGCTC+TTAGGTGC**, so splitting at lane number at 4th column(indexing starts from 0 here)
+
+
+
+**3. Adaptor Trimming**
+```
+java -Djava.io.tmpdir="$TEMPDIR" -Dsamjdk.threads=24 -jar /home/gpfs/o_lipika/PhD-analysis/agent/lib/trimmer-3.0.5.jar \
+    -fq1 $file1 \
+    -fq2 $r2_file \
+    -v2 \
+    -out_loc $OUTPUT_DIR
 ``` 
 
-**2. Alignment**
+**4. Alignment**
 ```
-./bwa-mem2 mem -C -t 48 $reference_genome $fastq_dir/D6039-8__D6039-8_S2_230904_A01664_0191_BHKW72DSX7_out.R1.1708286122814_Cut_0.fastq.gz $fastq_dir/D6039-8__D6039-8_S2_230904_A01664_0191_BHKW72DSX7_out.R2.1708286122814_Cut_0.fastq.gz > $fastq_dir/D6039-8__D6039-8_S2_230904_A01664_0191_BHKW72DSX7_out.sam | k8 bwa-postalt.js $alt_file
-echo "alignment done"
-echo ""
+for file1 in "$fastq_dir"/*.R1.*.fastq.gz; do
 
-# Convert SAM to BAM format
-samtools view -@48 -b -o $fastq_dir/D6039-8__D6039-8_S2_230904_A01664_0191_BHKW72DSX7_out.bam $fastq_dir/D6039-8__D6039-8_S2_230904_A01664_0191_BHKW72DSX7_out.sam
-echo "sam to bam done"
-echo " "
+    # Check if the corresponding R2 file exists
+    file2=$(echo "$file1" | sed 's/R1/R2/g')
+    header=$(zcat $file1 | head -n 1)
+    #echo $header
 
-# Sort the BAM file
-samtools sort -@48 -o $fastq_dir/D6039-8__D6039-8_S2_230904_A01664_0191_BHKW72DSX7_out_sorted.bam $fastq_dir/D6039-8__D6039-8_S2_230904_A01664_0191_BHKW72DSX7_out.bam
-echo "sort done"
-echo " "
+    filename=$(basename $file1)
+    SM=$(echo "$filename" | cut -d '_' -f 1)
 
-# Index the sorted BAM file
-# samtools index -@48 "${file1%.R1.*.fastq.gz}_sorted.bam"
-# echo "indexing done"
+    # Extract ID
+    ID=$(echo "$header" | cut -d ':' -f 1 | cut -d '@' -f 2)
+    #echo $ID
 
-rm "$fastq_dir/D6039-8__D6039-8_S2_230904_A01664_0191_BHKW72DSX7_out.R1.sam" "$fastq_dir/D6039-8__D6039-8_S2_230904_A01664_0191_BHKW72DSX7_out.bam"
+    # Extract Flowcell lane from the header
+    flowcell_lane=$(echo "$header" | cut -d ':' -f 4 | cut -d ' ' -f 1)
+    #echo $flowcell_lane
+
+    # Combine ID and Flowcell lane
+    ID="${ID}".${flowcell_lane}
+    # Extract PL
+    PL="ILLUMINA"
+
+    # Extract PU
+    PU=$(echo "$header" | cut -d ':' -f 3-4 | tr ':' '.')
+    #echo "@RG\\tID:$ID\\tSM:$SM\\tPL:ILLUMINA\\tPU:$PU"
+
+    # Align reads to the reference genome
+    ./bwa-mem2 mem -C -t 36 -R "@RG\\tID:$ID\\tSM:$SM\\tPL:$PL\\tPU:$PU" $reference_genome $file1 $file2 | k8 bwa-postalt.js $alt_file | samtools view -@36 -b | samtools sort -@36 -o "${file1%.R1.*.fastq.gz}_sorted.$flowcell_lane.bam"
+    samtools index -@36 "${file1%.R1.*.fastq.gz}_sorted.$flowcell_lane.bam"
+done
 ```
 
-**3. Add RG information**
+**4. Merge BAMs**
 ```
-# D6039-8__D6039-8
-# @A01664:191:HKW72DSX7:1:1101:1027:1016 1:N:0:TGCTGCTC+TTAGGTGC
+##part1
+for file1 in $fastq_dir/*_sorted.*.bam; do
+    
+    filename1="${file1##*/}"
+    #echo "filename1" $filename1
 
-srun samtools addreplacerg -@24 -r ID:HKW72DSX7.1 -r SM:D6039-8 -r PL:ILLUMINA -o /home/isilon/patho_anemone-meso/updated-data-bam/fastq/trimmed/D6039-8__D6039-8_S2_230904_A01664_0191_BHKW72DSX7_outt_sorted_RG.bam /home/isilon/patho_anemone-meso/updated-data-bam/fastq/trimmed/D6039-8__D6039-8_S2_230904_A01664_0191_BHKW72DSX7_out_sorted.bam
+    sample_name=$(echo "${filename1%_sorted*}" | sed 's/\.bam$//')
+    #echo "sample_name" $sample_name
+
+    rg_file="$fastq_dir/${sample_name}_RG.txt"
+    sample_file="$fastq_dir/${sample_name}_lane.txt"
+    touch "$rg_file"
+    touch "$sample_file"
+
+
+    for bam_file in $fastq_dir/$sample_name*.bam; do
+	echo $bam_file >> "$sample_file"
+        samtools view -H $bam_file | grep '^@RG' >> $rg_file
+    done
+
+    sort -u -o "$rg_file" "$rg_file"
+    sort -u -o "$sample_file" "$sample_file"
+
+done
+
+##part2
+for file1 in $fastq_dir/*lane.txt; do
+    
+    filename1="${file1##*/}"
+    #echo "filename1" $filename1
+
+    sample_name=$(echo "$filename1" | sed 's/_lane.txt//')
+    #sample_name=$(echo "${filename1%_sorted*}" | sed 's/\.bam$//')
+    echo "sample_name" $sample_name
+
+    samtools merge -@12 -r $fastq_dir/${sample_name}_merged.bam -b $file1 
+done
 ```
 
 **4. Markduplicates**
 ```
-java -jar "$PICARD_JAR" UmiAwareMarkDuplicatesWithMateCigar -I "${INPUT_DIR}/${filename}" -O "${filename1}_dedup.bam" -M "${filename1}_duplicate_metrics.txt" -UMI_METRICS "${filename1}_umi_metrics.txt" --BARCODE_TAG BC --TMP_DIR "$tmp" 
-
-rm -r "$tmp"
+java -Djava.io.tmpdir="$TEMPDIR" -Dsamjdk.threads=24 -jar "$PICARD_JAR" MarkDuplicates -I "${INPUT_DIR}/${filename}" -O "${filename1}_dedup.bam" -M "${filename1}_duplicate_metrics.txt" --BARCODE_TAG RX --TMP_DIR $TEMP
+ 
 ```
 
 **5. BQSR**
@@ -58,10 +117,10 @@ ref="/home/isilon/users/o_lipika/FFPE-WGS-samples/refernces/ref/GRCh38_full_anal
 dbsnp="/home/isilon/users/o_lipika/FFPE-WGS-samples/refernces/ref/gatk/dbsnp_146.hg38.vcf.gz"
 indel="/home/isilon/users/o_lipika/FFPE-WGS-samples/refernces/ref/gatk/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz"
 
-gatk BaseRecalibrator --java-options "-Xmx256G" -R $ref -I $bam_file --known-sites $dbsnp --known-sites $indel -O ${filename1}_output_file_recal1.table
-gatk ApplyBQSR --java-options "-Xmx256G" -R $ref -I $bam_file --bqsr-recal-file ${filename1}_output_file_recal1.table -O ${filename1}_output_file_BQSRecalibrated.bam
-gatk BaseRecalibrator --java-options "-Xmx256G" -R $ref -I ${filename1}_output_file_BQSRecalibrated.bam  --known-sites $dbsnp --known-sites $indel -O ${filename1}_output_file_recal2.table
-gatk AnalyzeCovariates --java-options "-Xmx256G" -before ${filename1}_output_file_recal1.table  -after ${filename1}_output_file_recal2.table -plots ${filename1}_output_file_BQSRecalibrated_recalibration_plots.pdf
+gatk BaseRecalibrator --java-options "-Xmx144G -Djava.io.tmpdir=$TEMPDIR -Dsamjdk.threads=24" -R $ref -I $bam_file --known-sites $dbsnp --known-sites $indel -O ${filename1}_recal1.table
+gatk ApplyBQSR --java-options "-Xmx144G -Djava.io.tmpdir=$TEMPDIR -Dsamjdk.threads=24" -R $ref -I $bam_file --bqsr-recal-file ${filename1}_recal1.table -O ${filename1}_BQSRecalibrated.bam
+gatk BaseRecalibrator --java-options "-Xmx144G -Djava.io.tmpdir=$TEMPDIR -Dsamjdk.threads=24" -R $ref -I ${filename1}_BQSRecalibrated.bam  --known-sites $dbsnp --known-sites $indel -O ${filename1}_recal2.table
+gatk AnalyzeCovariates --java-options "-Xmx144G -Djava.io.tmpdir=$TEMPDIR -Dsamjdk.threads=24" -before ${filename1}_recal1.table  -after ${filename1}_recal2.table -plots ${filename1}_BQSRecalibrated_recalibration_plots.pdf 
 ```
 
 **6. Qualimap**
