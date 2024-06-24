@@ -64,7 +64,7 @@ for file1 in "$fastq_dir"/*.R1.*.fastq.gz; do
 done
 ```
 
-**4. Merge BAMs**
+**5. Merge BAMs**
 ```
 ##part1
 for file1 in $fastq_dir/*_sorted.*.bam; do
@@ -105,13 +105,13 @@ for file1 in $fastq_dir/*lane.txt; do
 done
 ```
 
-**4. Markduplicates**
+**6. Markduplicates**
 ```
 java -Djava.io.tmpdir="$TEMPDIR" -Dsamjdk.threads=24 -jar "$PICARD_JAR" MarkDuplicates -I "${INPUT_DIR}/${filename}" -O "${filename1}_dedup.bam" -M "${filename1}_duplicate_metrics.txt" --BARCODE_TAG RX --TMP_DIR $TEMP
  
 ```
 
-**5. BQSR**
+**7. BQSR**
 ```
 ref="/home/isilon/users/o_lipika/FFPE-WGS-samples/refernces/ref/GRCh38_full_analysis_set_plus_decoy_hla.fa"
 dbsnp="/home/isilon/users/o_lipika/FFPE-WGS-samples/refernces/ref/gatk/dbsnp_146.hg38.vcf.gz"
@@ -123,7 +123,7 @@ gatk BaseRecalibrator --java-options "-Xmx144G -Djava.io.tmpdir=$TEMPDIR -Dsamjd
 gatk AnalyzeCovariates --java-options "-Xmx144G -Djava.io.tmpdir=$TEMPDIR -Dsamjdk.threads=24" -before ${filename1}_recal1.table  -after ${filename1}_recal2.table -plots ${filename1}_BQSRecalibrated_recalibration_plots.pdf 
 ```
 
-**6. Qualimap**
+**8. Qualimap**
 ```
 qualimap bamqc -nt 36 --skip-duplicated -bam $bam_file --java-mem-size=256G -outdir $ouput/$filename -outformat html
 echo "qualimap done and sambamba submitted"
@@ -131,7 +131,7 @@ sambamba flagstat -t 36 $bam_file  > ${ouput_dir1}/${filename}.stats.txt
 echo "sambamba done"
 ```
 
-**7. MultiQC** <br>
+**9. MultiQC** <br>
 qc-files folder has recal-tables from BQSR, flagstat results of *output_file_BQSRecalibrated.bam, and qualimap results.
 ```
 multiqc /home/isilon/patho_anemone-meso/updated-data-bam/fastq/trimmed/qc-files/ -n multiqc_qualimap_flagstat_BQSR_report.html --comment "WGS final QC report"
