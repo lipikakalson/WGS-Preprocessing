@@ -16,7 +16,7 @@ zcat $file1 | /home/gpfs/o_lipika/PhD-analysis/fastq-split/fastqSplit -k 3 -p -p
 zcat $r2_file | /home/gpfs/o_lipika/PhD-analysis/fastq-split/fastqSplit -k 3 -p -prefix ${sample_name2}. &
 ```
 Using the (https://github.com/stevekm/fastq-split)[https://github.com/stevekm/fastq-split]
-Readname looks like this: **@A01664:191:HKW72DSX7:1:1101:1027:1016 1:N:0:TGCTGCTC+TTAGGTGC**, so splitting at lane number at 4th column(indexing starts from 0 here)
+Readname looks like this: **@A01664:191:HKW72DSX7:1:1101:1027:1016 1:N:0:TGCTGCTC+TTAGGTGC**, so splitting at lane number at 4th column(indexing starts from 0)
 
 
 
