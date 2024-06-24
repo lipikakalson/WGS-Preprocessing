@@ -64,8 +64,10 @@ for file1 in "$fastq_dir"/*.R1.*.fastq.gz; do
 done
 ```
 
-**5. Merge BAMs**
-For all the files in directory, not single sample
+**5. Merge BAMs** <br>
+For all the files in directory, not single sample. <br>
+Part1 - wrote the number of splitted files there are for one sample in *lane.txt file. Also, grepped @RG for the all the splitted bams in *RG.txt <brr>
+Part2 - used the *lane.txt file, to merge the bam and -r is used to tag the reads with @RG
 ```
 ##part1
 for file1 in $fastq_dir/*_sorted.*.bam; do
