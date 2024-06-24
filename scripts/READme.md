@@ -65,6 +65,7 @@ done
 ```
 
 **5. Merge BAMs**
+For all the files in directory, not single sample
 ```
 ##part1
 for file1 in $fastq_dir/*_sorted.*.bam; do
