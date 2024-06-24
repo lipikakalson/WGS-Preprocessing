@@ -1,18 +1,18 @@
 #!/bin/bash
-#SBATCH --job-name='b-trimmer'
+#SBATCH --job-name='trimmer'
 #SBATCH --mail-user=lipika.lipika@medunigraz.at
 #SBATCH --partition=cpu
-#SBATCH --error=error-btrimmer.e
-#SBATCH --output=output-btrimmer.o
+#SBATCH --error=trimmer/error-trimmer.e
+#SBATCH --output=trimmer/output-trimmer.o
 
 
 # Define the directory containing input files
-INPUT_DIR="/home/isilon/patho_anemone-meso/updated-data-bam/fastq"
+INPUT_DIR="/home/isilon/patho_anemone-meso/fastq/fq-split/"
 # Define the directory to save trimmed files
-OUTPUT_DIR="/home/isilon/patho_anemone-meso/updated-data-bam/fastq/trimmed"
+OUTPUT_DIR="/home/isilon/patho_anemone-meso/fastq/trimmed"
 
 # Loop through all files in the directory
-for file1 in $INPUT_DIR/*.R1.fastq.gz; do
+for file1 in "$INPUT_DIR"*.R1.*.fastq.gz; do
   # Extract filename without path and directory part
   # Replace _R1 with _R2 to get R2 filename using sed
   filename1="${file1##*/}"
@@ -24,17 +24,20 @@ for file1 in $INPUT_DIR/*.R1.fastq.gz; do
 
   r2_file="$dir_part/$filename2"
   echo "$r2_file"
+  
+  sbatch <<EOF
+#!/bin/bash
+#SBATCH --job-name=trim_${filename1}
+#SBATCH --output=trimmer/output-trim_${filename1}.o
+#SBATCH --error=trimmer/error-trim_${filename1}.e
+#SBATCH --partition=cpu
+#SBATCH --cpus-per-task=24
 
-  # Submit a job to trim the files
-  sbatch \
-    --job-name="trim_${filename1}" \
-    --output="output-trim_${filename1}.o" \
-    --error="error-trim_${filename1}.e" \
-    --partition=cpu \
-    --cpus-per-task=36 \
-    --wrap="java -jar /home/gpfs/o_lipika/PhD-analysis/agent/lib/trimmer-3.0.5.jar \
-    -fq1 \"$file1\" \
-    -fq2 \"$r2_file\" \
+java -Djava.io.tmpdir="$TEMPDIR" -Dsamjdk.threads=24 -jar /home/gpfs/o_lipika/PhD-analysis/agent/lib/trimmer-3.0.5.jar \
+    -fq1 $file1 \
+    -fq2 $r2_file \
     -v2 \
-    -out_loc \"$OUTPUT_DIR\""
+    -out_loc $OUTPUT_DIR
+
+EOF
 done
