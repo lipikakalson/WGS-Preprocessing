@@ -66,7 +66,7 @@ done
 
 **5. Merge BAMs** <br>
 For all the files in directory, not single sample. <br>
-Part1 - wrote the number of splitted files there are for one sample in *lane.txt file. Also, grepped @RG for the all the splitted bams in *RG.txt <brr>
+Part1 - wrote the number of splitted files there are for one sample in *lane.txt file. Also, grepped @RG for the all the splitted bams in *RG.txt, just to cross check. <brr>
 Part2 - used the *lane.txt file, to merge the bam and -r is used to tag the reads with @RG
 ```
 ##part1
