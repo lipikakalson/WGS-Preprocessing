@@ -14,7 +14,7 @@ OUTPUT_DIR="/home/isilon/patho_anemone-meso/fastq/fq-split"
 ulimit -c unlimited
 
 # Loop through all files in the directory
-for file1 in "$INPUT_DIR"*.R1.fastq.gz; do
+for file1 in "$INPUT_DIR"*.fastq.gz; do
   # Extract filename without path and directory part
   # Replace _R1 with _R2 to get R2 filename using sed
   filename1="${file1##*/}"
