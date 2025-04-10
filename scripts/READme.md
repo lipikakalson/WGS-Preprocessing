@@ -15,7 +15,7 @@ samtools fastq -@8 -t --reference "$reference" -1 "$output_folder/${sample_name}
 gunzip -c $file1 | /home/gpfs/o_lipika/PhD-analysis/fastq-split/fastqSplit -k 2,3 -p -prefix ${sample_name1}. &
 ```
 Using the [fastq-split](https://github.com/stevekm/fastq-split). <br>
-Readname looks like this: **@A01664:191:HKW72DSX7:1:1101:1027:1016 1:N:0:TGCTGCTC+TTAGGTGC**, so splitting at 3rd, 4th columns(indexing starts from 0)
+Readname looks like this: **@A01664:191:HKW72DSX7:1:1101:1027:1016 1:N:0:TGCTGCTC+TTAGGTGC**, so splitting by 3rd, 4th columns(indexing starts from 0)
 
 
 **3. Adaptor Trimming**
