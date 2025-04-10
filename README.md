@@ -30,7 +30,7 @@ We have dual indexed molecular barcoded fastq files, so for that we used Trimmer
 Alignment of the fastq files using the hs38DH.fa, also did the post processing using the bwa.kit for alt handling. bams were merged for the same samples. Then sorting, and indexing. (Computationaly intensive).
 
 ### **Step 5: Duplicate removal** <br>
-This was done by GATK MarkDuplicates with BARCODE_TAG as RX, as we have molecular barcoded genome libraries.
+This was done by samtools v1.21 with BARCODE_TAG as RX, as we have molecular barcoded genome libraries.
 
 ### **Step 6: BQSR** 
 Base Quality Score Recalibration ([BQSR](https://gatk.broadinstitute.org/hc/en-us/articles/360035890531-Base-Quality-Score-Recalibration-BQSR)):- A data pre-processing step that detects systematic errors made by the sequencing machine when it estimates the accuracy of each base call.
