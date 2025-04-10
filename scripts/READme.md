@@ -7,13 +7,12 @@ This might miss some necessary declaration of variable here like "filename", "in
 
 **1. Cram to fastq**
 ```
-samtools fastq -@24 -t --reference "$reference" -1 "$output_folder/${sample_name}.R1.fastq" -2 "$output_folder/${sample_name}.R2.fastq" "$cram_file"
+samtools fastq -@8 -t --reference "$reference" -1 "$output_folder/${sample_name}.R1.fastq" -2 "$output_folder/${sample_name}.R2.fastq" "$cram_file"
 ```
 
 **2. Split-lanewise**
 ```
-zcat $file1 | /home/gpfs/o_lipika/PhD-analysis/fastq-split/fastqSplit -k 3 -p -prefix ${sample_name1}. &
-zcat $r2_file | /home/gpfs/o_lipika/PhD-analysis/fastq-split/fastqSplit -k 3 -p -prefix ${sample_name2}. &
+gunzip -c $file1 | /home/gpfs/o_lipika/PhD-analysis/fastq-split/fastqSplit -k 2,3 -p -prefix ${sample_name1}. &
 ```
 Using the [fastq-split](https://github.com/stevekm/fastq-split). <br>
 Readname looks like this: **@A01664:191:HKW72DSX7:1:1101:1027:1016 1:N:0:TGCTGCTC+TTAGGTGC**, so splitting at lane number at 4th column(indexing starts from 0)
@@ -22,7 +21,7 @@ Readname looks like this: **@A01664:191:HKW72DSX7:1:1101:1027:1016 1:N:0:TGCTGCT
 
 **3. Adaptor Trimming**
 ```
-java -Djava.io.tmpdir="$TEMPDIR" -Dsamjdk.threads=24 -jar /home/gpfs/o_lipika/PhD-analysis/agent/lib/trimmer-3.0.5.jar \
+java -Djava.io.tmpdir="$TEMPDIR" -Dsamjdk.threads=12 -jar /home/gpfs/o_lipika/PhD-analysis/agent/lib/trimmer-3.0.5.jar \
     -fq1 $file1 \
     -fq2 $r2_file \
     -v2 \
@@ -31,37 +30,7 @@ java -Djava.io.tmpdir="$TEMPDIR" -Dsamjdk.threads=24 -jar /home/gpfs/o_lipika/Ph
 
 **4. Alignment**
 ```
-for file1 in "$fastq_dir"/*.R1.*.fastq.gz; do
-
-    # Check if the corresponding R2 file exists
-    file2=$(echo "$file1" | sed 's/R1/R2/g')
-    header=$(zcat $file1 | head -n 1)
-    #echo $header
-
-    filename=$(basename $file1)
-    SM=$(echo "$filename" | cut -d '_' -f 1)
-
-    # Extract ID
-    ID=$(echo "$header" | cut -d ':' -f 1 | cut -d '@' -f 2)
-    #echo $ID
-
-    # Extract Flowcell lane from the header
-    flowcell_lane=$(echo "$header" | cut -d ':' -f 4 | cut -d ' ' -f 1)
-    #echo $flowcell_lane
-
-    # Combine ID and Flowcell lane
-    ID="${ID}".${flowcell_lane}
-    # Extract PL
-    PL="ILLUMINA"
-
-    # Extract PU
-    PU=$(echo "$header" | cut -d ':' -f 3-4 | tr ':' '.')
-    #echo "@RG\\tID:$ID\\tSM:$SM\\tPL:ILLUMINA\\tPU:$PU"
-
-    # Align reads to the reference genome
-    ./bwa-mem2 mem -C -t 36 -R "@RG\\tID:$ID\\tSM:$SM\\tPL:$PL\\tPU:$PU" $reference_genome $file1 $file2 | k8 bwa-postalt.js $alt_file | samtools view -@36 -b | samtools sort -@36 -o "${file1%.R1.*.fastq.gz}_sorted.$flowcell_lane.bam"
-    samtools index -@36 "${file1%.R1.*.fastq.gz}_sorted.$flowcell_lane.bam"
-done
+./bwa-mem2 mem -C -Y -t 12 -R '@RG\tID:$ID\tPL:ILLUMINA\tPU:$PU\tSM:$SM'  $reference_genome $file1 $file2 | k8 bwa-postalt.js $alt_file | samtools view -@12 -b | samtools sort -@12 -o "${file1%.R1.*.fastq.gz}_sorted.$flowcell_lane.bam"
 ```
 
 **5. Merge BAMs** <br>
@@ -75,6 +44,7 @@ for file1 in $fastq_dir/*_sorted.*.bam; do
     filename1="${file1##*/}"
     #echo "filename1" $filename1
 
+    #sample_name=$(echo "$filename1" | sed 's/_sorted[._0-9]*//')
     sample_name=$(echo "${filename1%_sorted*}" | sed 's/\.bam$//')
     #echo "sample_name" $sample_name
 
@@ -92,26 +62,20 @@ for file1 in $fastq_dir/*_sorted.*.bam; do
     sort -u -o "$rg_file" "$rg_file"
     sort -u -o "$sample_file" "$sample_file"
 
+    echo "Processed $file1"
+
 done
+
 
 ##part2
-for file1 in $fastq_dir/*lane.txt; do
-    
-    filename1="${file1##*/}"
-    #echo "filename1" $filename1
 
-    sample_name=$(echo "$filename1" | sed 's/_lane.txt//')
-    #sample_name=$(echo "${filename1%_sorted*}" | sed 's/\.bam$//')
-    echo "sample_name" $sample_name
-
-    samtools merge -@12 -r $fastq_dir/${sample_name}_merged.bam -b $file1 
-done
+samtools merge -@12 -r $fastq_dir/${SM}_merged.bam -b $file1
 ```
 
 **6. Markduplicates**
 ```
-java -Djava.io.tmpdir="$TEMPDIR" -Dsamjdk.threads=24 -jar "$PICARD_JAR" MarkDuplicates -I "${INPUT_DIR}/${filename}" -O "${filename1}_dedup.bam" -M "${filename1}_duplicate_metrics.txt" --BARCODE_TAG RX --TMP_DIR $TEMP
- 
+samtools sort -n -@12 "$bam" | samtools fixmate -m -@12 - - | samtools sort -@12 - | samtools markdup -@12 --barcode-tag RX --use-read-groups --duplicate-count - "$outbam"
+samtools index "$outbam" 
 ```
 
 **7. BQSR**
@@ -120,17 +84,20 @@ ref="/home/isilon/users/o_lipika/FFPE-WGS-samples/refernces/ref/GRCh38_full_anal
 dbsnp="/home/isilon/users/o_lipika/FFPE-WGS-samples/refernces/ref/gatk/dbsnp_146.hg38.vcf.gz"
 indel="/home/isilon/users/o_lipika/FFPE-WGS-samples/refernces/ref/gatk/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz"
 
-gatk BaseRecalibrator --java-options "-Xmx144G -Djava.io.tmpdir=$TEMPDIR -Dsamjdk.threads=24" -R $ref -I $bam_file --known-sites $dbsnp --known-sites $indel -O ${filename1}_recal1.table
-gatk ApplyBQSR --java-options "-Xmx144G -Djava.io.tmpdir=$TEMPDIR -Dsamjdk.threads=24" -R $ref -I $bam_file --bqsr-recal-file ${filename1}_recal1.table -O ${filename1}_BQSRecalibrated.bam
-gatk BaseRecalibrator --java-options "-Xmx144G -Djava.io.tmpdir=$TEMPDIR -Dsamjdk.threads=24" -R $ref -I ${filename1}_BQSRecalibrated.bam  --known-sites $dbsnp --known-sites $indel -O ${filename1}_recal2.table
-gatk AnalyzeCovariates --java-options "-Xmx144G -Djava.io.tmpdir=$TEMPDIR -Dsamjdk.threads=24" -before ${filename1}_recal1.table  -after ${filename1}_recal2.table -plots ${filename1}_BQSRecalibrated_recalibration_plots.pdf 
+gatk BaseRecalibrator --java-options "-Xmx12G  -Dsamjdk.threads=2" -R $ref -I $bam_file --known-sites $dbsnp --known-sites $indel -O ${filename1}_recal1.table
+
+gatk ApplyBQSR --java-options "-Xmx12G  -Dsamjdk.threads=2" -R $ref -I $bam_file --bqsr-recal-file ${filename1}_recal1.table -O ${filename1}_BQSRecalibrated.bam
+
+gatk BaseRecalibrator --java-options "-Xmx12G  -Dsamjdk.threads=2" -R $ref -I ${filename1}_BQSRecalibrated.bam  --known-sites $dbsnp --known-sites $indel -O ${filename1}_recal2.table
+
+gatk AnalyzeCovariates --java-options "-Xmx12G -Dsamjdk.threads=2" -before ${filename1}_recal1.table  -after ${filename1}_recal2.table -plots ${filename1}_BQSRecalibrated_recalibration_plots.pdf 
 ```
 
 **8. Qualimap**
 ```
-qualimap bamqc -nt 36 --skip-duplicated -bam $bam_file --java-mem-size=256G -outdir $ouput/$filename -outformat html
-echo "qualimap done and sambamba submitted"
-sambamba flagstat -t 36 $bam_file  > ${ouput_dir1}/${filename}.stats.txt
+qualimap bamqc -nt 4 --skip-duplicated -bam $bam_file -outdir $ouput/$filename -outformat html -c --java-mem-size=40G 
+#echo "qualimap done and sambamba submit "
+sambamba flagstat -t 4 $bam_file  > ${ouput_dir1}/${filename}.stats.txt 
 echo "sambamba done"
 ```
 
