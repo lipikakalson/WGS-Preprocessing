@@ -1,47 +1,36 @@
 #!/bin/bash
-#SBATCH --job-name='mark-duplicates'
+#SBATCH --job-name=mdup_batch
 #SBATCH --mail-user=lipika.lipika@medunigraz.at
 #SBATCH --partition=cpu
-#SBATCH --error=markdup/mark-duplicates.e
-#SBATCH --output=markdup/mark-duplicates.o
+#SBATCH --output=mdup/output.o
+#SBATCH --error=mdup/error.e
 
-# Define the directory containing input files
-INPUT_DIR="/home/isilon/patho_anemone-meso/fastq/merged/batch2"
-# Define the output directory
-OUTPUT_DIR="/home/isilon/patho_anemone-meso/fastq/dedup"
-TMP_FILE="/home/isilon/patho_anemone-meso/tmp"
+INPUT_DIR="/home/isilon/patho_anemone-meso/fastq/trimmed/"
+OUTPUT_DIR="/home/isilon/patho_anemone-meso/fastq/dedup/samtools/"
+LOG_DIR="mdup"
 
-# Ensure picard.jar is in the PATH or specify its full path
-PICARD_JAR="/home/gpfs/o_lipika/PhD-analysis/picard.jar"
+for bam in "$INPUT_DIR"*merged.bam; do
+  filename=$(basename "$bam")
+  sample=$(basename "$bam" .bam)
+  outbam="${OUTPUT_DIR}${sample}_dedup.bam"
 
-ulimit -c unlimited
-
-# Loop through all files in the directory
-for bam_file in "$INPUT_DIR"/*merged.bam; do
-  echo "bam file: $bam_file"
-  # Extract filename without path and directory part
-  filename=$(basename "$bam_file")
-  filename1="${bam_file%.bam}"
-
-  #mkdir -p "$TMP_FILE/$filename"
-  #tmp="$TMP_FILE/$filename"
-
-
-  
   sbatch <<EOF
 #!/bin/bash
-#SBATCH --job-name=markdup_${filename%.*}
-#SBATCH --output=markdup/markdup_${filename%.*}.out
-#SBATCH --error=markdup/markdup_${filename%.*}.err
+#SBATCH --job-name=mdup_$sample
+#SBATCH --output=${LOG_DIR}/output-$sample.o
+#SBATCH --error=${LOG_DIR}/error-$sample.e
 #SBATCH --partition=cpu
-#SBATCH --cpus-per-task=24
+#SBATCH --cpus-per-task=12
+#SBATCH --mem=192G
 
-java -Djava.io.tmpdir="$TEMPDIR" -Dsamjdk.threads=24 -jar "$PICARD_JAR" MarkDuplicates -I "${INPUT_DIR}/${filename}" -O "${filename1}_dedup.bam" -M "${filename1}_duplicate_metrics.txt" --BARCODE_TAG RX --TMP_DIR $TEMP
+set -euo pipefail
 
-#java -jar "$PICARD_JAR" MarkDuplicates -I /home/isilon/patho_anemone-meso/fastq/merged/batch1/D6039-9__D6039-9_S3_230904_A01664_0191_BHKW72DSX7_merged.bam -O /home/isilon/patho_anemone-meso/fastq/merged/batch1/D6039-9__D6039-9_S3_230904_A01664_0191_BHKW72DSX7_merged_dedup_markduplicates.bam  --BARCODE_TAG RX -M D6039-9_output_duplicate_metrics_md.txt  --TMP_DIR /home/isilon/patho_anemone-meso/tmp/D6039-9__tmp_md
+echo "🔁 Starting: $sample"
 
-rm -r "$tmp"
+samtools sort -n -@12 "$bam" | samtools fixmate -m -@12 - - | samtools sort -@12 - | samtools markdup -@12 --barcode-tag RX --use-read-groups --duplicate-count - "$outbam"
+samtools index "$outbam"
+
+echo "✅ Finished: $outbam"
 EOF
 
 done
-
