@@ -5,7 +5,7 @@ We did following steps so far:
 1. Selection of Patients <br>
 2. Whole genome Sequencing <br>
 3. Preprocessing
-4. Analysis
+4. Analysis (to do)
 
 # 1. Selection of patients
 Done by Luka.
