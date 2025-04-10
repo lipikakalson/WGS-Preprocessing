@@ -1,10 +1,10 @@
 #!/bin/sh
-#SBATCH --job-name='merge'
-#SBATCH --mem=256GB
+#SBATCH --job-name='merge1'
 #SBATCH --mail-user=lipika.lipika@medunigraz.at
 #SBATCH --partition=cpu
 #SBATCH --output=merge/output-merge.o
 #SBATCH --error=merge/error-merge.e
+#SBATCH --mem=96GB
 
 squeue -u 'o_lipika'
 
@@ -38,4 +38,7 @@ for file1 in $fastq_dir/*_sorted.*.bam; do
     sort -u -o "$rg_file" "$rg_file"
     sort -u -o "$sample_file" "$sample_file"
 
+    echo "Processed $file1"
+
 done
+
