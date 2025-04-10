@@ -1,5 +1,5 @@
-# PhD-summary
-This readme file is a summary of the things we did so far for the aim 1 of my PhD.
+# ANEMONE
+This readme file is a summary of the things we did so far for the ANEMONE WGS.
 
 We did following steps so far:
 1. Selection of Patients <br>
