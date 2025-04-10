@@ -9,10 +9,10 @@ squeue -u 'o_lipika'
 ulimit -c unlimited
 
 ref="/home/isilon/users/o_lipika/FFPE-WGS-samples/refernces/ref/GRCh38_full_analysis_set_plus_decoy_hla.fa"
-dbsnp="/home/isilon/users/o_lipika/FFPE-WGS-samples/refernces/ref/gatk/dbsnp_146.hg38.vcf.gz"
-indel="/home/isilon/users/o_lipika/FFPE-WGS-samples/refernces/ref/gatk/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz"
+dbsnp="/home/isilon/users/o_lipika/FFPE-WGS-samples/refernces/ref/gatk/new/dbsnp_146.hg38.vcf.gz"
+indel="/home/isilon/users/o_lipika/FFPE-WGS-samples/refernces/ref/gatk/new/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz"
 
-INPUT_DIR="/home/isilon/patho_anemone-meso/fastq/merged/batch2"
+INPUT_DIR="/home/isilon/patho_anemone-meso/fastq/dedup/samtools"
 
 for bam_file in "$INPUT_DIR"/*dedup.bam; do
   echo "bam file: $bam_file"
@@ -22,20 +22,27 @@ for bam_file in "$INPUT_DIR"/*dedup.bam; do
 
   sbatch <<EOF
 #!/bin/bash
-#SBATCH --job-name=gatk_${filename%.*}
-#SBATCH --output=gatk/gatk_${filename%.*}.out
-#SBATCH --error=gatk/gatk_${filename%.*}.err
+#SBATCH --job-name=${filename%.*}_BQSR
+#SBATCH --output=gatk/o_${filename%.*}.o
+#SBATCH --error=gatk/e_${filename%.*}.e
 #SBATCH --partition=cpu
-#SBATCH --cpus-per-task=24
-#SBATCH --mem=144GB
+#SBATCH --cpus-per-task=2
+#SBATCH --mem=12GB
 
-gatk BaseRecalibrator --java-options "-Xmx144G -Djava.io.tmpdir=$TEMPDIR -Dsamjdk.threads=24" -R $ref -I $bam_file --known-sites $dbsnp --known-sites $indel -O ${filename1}_recal1.table
+#n_TEMPDIR="/home/isilon/patho_anemone-meso/tmp/\${filename%.*}_${SLURM_JOB_ID}"
+#mkdir -p "\${n_TEMPDIR}"
 
-gatk ApplyBQSR --java-options "-Xmx144G -Djava.io.tmpdir=$TEMPDIR -Dsamjdk.threads=24" -R $ref -I $bam_file --bqsr-recal-file ${filename1}_recal1.table -O ${filename1}_BQSRecalibrated.bam
+# Step 2: Set trap to delete it automatically on job exit
+#trap 'rm -rf "\${n_TEMPDIR}"' EXIT
 
-gatk BaseRecalibrator --java-options "-Xmx144G -Djava.io.tmpdir=$TEMPDIR -Dsamjdk.threads=24" -R $ref -I ${filename1}_BQSRecalibrated.bam  --known-sites $dbsnp --known-sites $indel -O ${filename1}_recal2.table
+gatk BaseRecalibrator --java-options "-Xmx12G  -Dsamjdk.threads=2" -R $ref -I $bam_file --known-sites $dbsnp --known-sites $indel -O ${filename1}_recal1.table
 
-gatk AnalyzeCovariates --java-options "-Xmx144G -Djava.io.tmpdir=$TEMPDIR -Dsamjdk.threads=24" -before ${filename1}_recal1.table  -after ${filename1}_recal2.table -plots ${filename1}_BQSRecalibrated_recalibration_plots.pdf 
+gatk ApplyBQSR --java-options "-Xmx12G  -Dsamjdk.threads=2" -R $ref -I $bam_file --bqsr-recal-file ${filename1}_recal1.table -O ${filename1}_BQSRecalibrated.bam
+
+gatk BaseRecalibrator --java-options "-Xmx12G  -Dsamjdk.threads=2" -R $ref -I ${filename1}_BQSRecalibrated.bam  --known-sites $dbsnp --known-sites $indel -O ${filename1}_recal2.table
+
+gatk AnalyzeCovariates --java-options "-Xmx12G -Dsamjdk.threads=2" -before ${filename1}_recal1.table  -after ${filename1}_recal2.table -plots ${filename1}_BQSRecalibrated_recalibration_plots.pdf 
 
 EOF
 done
+
