@@ -12,7 +12,7 @@ INPUT_DIR="/home/isilon/patho_anemone-meso/fastq/fq-split/"
 OUTPUT_DIR="/home/isilon/patho_anemone-meso/fastq/trimmed"
 
 # Loop through all files in the directory
-for file1 in "$INPUT_DIR"*.R1.*.fastq.gz; do
+for file1 in "$INPUT_DIR"*.R1.*fastq.gz; do
   # Extract filename without path and directory part
   # Replace _R1 with _R2 to get R2 filename using sed
   filename1="${file1##*/}"
@@ -31,9 +31,9 @@ for file1 in "$INPUT_DIR"*.R1.*.fastq.gz; do
 #SBATCH --output=trimmer/output-trim_${filename1}.o
 #SBATCH --error=trimmer/error-trim_${filename1}.e
 #SBATCH --partition=cpu
-#SBATCH --cpus-per-task=24
+#SBATCH --cpus-per-task=12
 
-java -Djava.io.tmpdir="$TEMPDIR" -Dsamjdk.threads=24 -jar /home/gpfs/o_lipika/PhD-analysis/agent/lib/trimmer-3.0.5.jar \
+java -Djava.io.tmpdir="$TEMPDIR" -Dsamjdk.threads=12 -jar /home/gpfs/o_lipika/PhD-analysis/agent/lib/trimmer-3.0.5.jar \
     -fq1 $file1 \
     -fq2 $r2_file \
     -v2 \
