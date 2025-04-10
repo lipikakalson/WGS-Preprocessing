@@ -15,8 +15,7 @@ samtools fastq -@8 -t --reference "$reference" -1 "$output_folder/${sample_name}
 gunzip -c $file1 | /home/gpfs/o_lipika/PhD-analysis/fastq-split/fastqSplit -k 2,3 -p -prefix ${sample_name1}. &
 ```
 Using the [fastq-split](https://github.com/stevekm/fastq-split). <br>
-Readname looks like this: **@A01664:191:HKW72DSX7:1:1101:1027:1016 1:N:0:TGCTGCTC+TTAGGTGC**, so splitting at lane number at 4th column(indexing starts from 0)
-
+Readname looks like this: **@A01664:191:HKW72DSX7:1:1101:1027:1016 1:N:0:TGCTGCTC+TTAGGTGC**, so splitting at 3rd, 4th columns(indexing starts from 0)
 
 
 **3. Adaptor Trimming**
@@ -26,7 +25,8 @@ java -Djava.io.tmpdir="$TEMPDIR" -Dsamjdk.threads=12 -jar /home/gpfs/o_lipika/Ph
     -fq2 $r2_file \
     -v2 \
     -out_loc $OUTPUT_DIR
-``` 
+```
+Using the tool developed by Agilent itself - because it removes the adaptor as well as move the UMIs into a tag, which could be used later for marking duplicates. 
 
 **4. Alignment**
 ```
@@ -77,6 +77,7 @@ samtools merge -@12 -r $fastq_dir/${SM}_merged.bam -b $file1
 samtools sort -n -@12 "$bam" | samtools fixmate -m -@12 - - | samtools sort -@12 - | samtools markdup -@12 --barcode-tag RX --use-read-groups --duplicate-count - "$outbam"
 samtools index "$outbam" 
 ```
+samtools version1.21 - helps in marking duplicates using barcode tag (UMIs).
 
 **7. BQSR**
 ```
@@ -92,6 +93,7 @@ gatk BaseRecalibrator --java-options "-Xmx12G  -Dsamjdk.threads=2" -R $ref -I ${
 
 gatk AnalyzeCovariates --java-options "-Xmx12G -Dsamjdk.threads=2" -before ${filename1}_recal1.table  -after ${filename1}_recal2.table -plots ${filename1}_BQSRecalibrated_recalibration_plots.pdf 
 ```
+This is done to improve base quality accuracy and remove systematic errors (gatk - best practices). Improves variant calling.
 
 **8. Qualimap**
 ```
@@ -100,12 +102,14 @@ qualimap bamqc -nt 4 --skip-duplicated -bam $bam_file -outdir $ouput/$filename -
 sambamba flagstat -t 4 $bam_file  > ${ouput_dir1}/${filename}.stats.txt 
 echo "sambamba done"
 ```
+Quality control (QC) of aligned BAM files.
 
 **9. MultiQC** <br>
-qc-files folder has recal-tables from BQSR, flagstat results of *output_file_BQSRecalibrated.bam, and qualimap results.
 ```
 multiqc /home/isilon/patho_anemone-meso/updated-data-bam/fastq/trimmed/qc-files/ -n multiqc_qualimap_flagstat_BQSR_report.html --comment "WGS final QC report"
 ```
+qc-files folder has recal-tables from BQSR, flagstat results of *output_file_BQSRecalibrated.bam, and qualimap results.
+
 
 
 
