@@ -1,7 +1,7 @@
 ## Commands used
 
 All the scripts for preprocessing and analysis.
-In this script, we tried to do the preprocessing of the raw sequencing data to get analysis ready BAM files. (I tried to replicate the alignment-nf in this workflow). Batch script are in the folder, below are the commands used in the scripts. 
+In this script, we tried to do the preprocessing of the raw sequencing data to get analysis ready BAM files. (I tried to replicate the alignment-nf used at IARC in this workflow). Batch script are in the folder, below are the commands used in the scripts. 
 
 This might miss some necessary declaration of variable here like "filename", "input_dir", etc., but they are there in batch scripts.
 
