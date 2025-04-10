@@ -21,29 +21,28 @@ for file1 in "$INPUT_DIR"*.fastq.gz; do
   sample_name1=$(basename "$filename1" .fastq.gz)
   dir_part="${file1%/*}"
   echo $file1
-  
+  #echo $sample_name1
+  #break 
   # Replace _R1 with _R2 to get R2 filename
-  filename2=$(echo "$filename1" | sed 's/R1/R2/g')
-  sample_name2=$(basename "$filename2" .fastq.gz)
+  #filename2=$(echo "$filename1" | sed 's/R1/R2/g')
+  #sample_name2=$(basename "$filename2" .fastq.gz)
 
-  r2_file="$dir_part/$filename2"
-  echo "$r2_file"
+  #r2_file="$dir_part/$filename2"
+  #echo "$r2_file"
   
   sbatch <<EOF
 #!/bin/bash
 #SBATCH --job-name=demux_${sample_name1}
-#SBATCH --output=demux/output-demux_$sample_name1}.o
+#SBATCH --output=demux/output-demux_${sample_name1}.o
 #SBATCH --error=demux/error-demux_${sample_name1}.e
 #SBATCH --partition=cpu
-#SBATCH --cpus-per-task=12
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=96GB
 
 
-zcat $file1 | /home/gpfs/o_lipika/PhD-analysis/fastq-split/fastqSplit -k 3 -p -prefix ${sample_name1}. &
-zcat $r2_file | /home/gpfs/o_lipika/PhD-analysis/fastq-split/fastqSplit -k 3 -p -prefix ${sample_name2}. &
+gunzip -c $file1 | /home/gpfs/o_lipika/PhD-analysis/fastq-split/fastqSplit -k 2,3 -p -prefix ${sample_name1}. &
 
-wait
-
-
+wait 
 
 EOF
 done
