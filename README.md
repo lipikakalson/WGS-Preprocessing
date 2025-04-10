@@ -21,7 +21,7 @@ To make our data analysis ready, our first aim was to see the quality of our dat
 We did this as most of the common bioinformatics tool accept the .fastq extension files for analysis, so it is easy for further processing.
 
 ### **Step 2: Split lanewise each fastq file** <br>
-In later steps like using BQSR, exact readname information is needed, and also to keep the analysis to up to the mark, we performed this step so our file could have each unique RG headers.
+In later steps like using BQSR, exact readname information is needed, and also to keep the analysis to up to the mark, we performed this step so our file could have each unique RG headers. Also, so reads could be tagged during alignment.
 
 ### **Step 3: Adaptor Trimming.** <br>
 We have dual indexed molecular barcoded fastq files, so for that we used Trimmer by [AGeNT](https://www.agilent.com/cs/library/software/Public/AGeNT%20ReadMe.pdf) (The Agilent Genomics Tooklkit). It removes adaptor sequences from Illumina Sequencing reads generated using Sureselect library preparation kits, it also processed the Molecular Barcodes(MBC) and adds the information to read name of output fastq files.
