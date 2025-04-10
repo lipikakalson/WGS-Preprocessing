@@ -15,7 +15,7 @@ We used 7µm FFPE sections for DNA extraction with the Promega Maxwell RSC FFPE 
 After quantification on the Agilent TapeStation with the D1000 kit, the WGS sequencing was performed on the Illumina NovaSeq 6000 Sequencer on S4 Flow Cells (200 cyles)  with calculated 800 Mio Reads per sample.
 
 # 3. Preprocessing
-To make our data analysis ready, our first aim was to see the quality of our data. We have raw cram files for our analysis on which we performed following steps:
+To make our data analysis ready, our first aim was to see the quality of our data. We have raw cram files for our analysis on which we performed following steps (We atleast desire 30x coverage):
 
 ### **Step 1: Conversion to fastq.** <br>
 We did this as most of the common bioinformatics tool accept the .fastq extension files for analysis, so it is easy for further processing.
