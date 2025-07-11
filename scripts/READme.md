@@ -106,7 +106,7 @@ Quality control (QC) of aligned BAM files.
 
 **9. MultiQC** <br>
 ```
-multiqc /home/isilon/patho_anemone-meso/updated-data-bam/fastq/trimmed/qc-files/ -n multiqc_qualimap_flagstat_BQSR_report.html --comment "WGS final QC report"
+multiqc /home/isilon/patho_anemone-meso/fastq/qc-files  -n multiqc_qualimap_flagstat_BQSR_report.html --comment "WGS final QC report"
 ```
 qc-files folder has recal-tables from BQSR, flagstat results of *output_file_BQSRecalibrated.bam, and qualimap results.
 
